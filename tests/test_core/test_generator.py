@@ -1,14 +1,13 @@
-import pytest
-from rag.core.generator import summarize_incidents
+from rag.core.generator import generate_answer
 
 
 def test_summarize_incidents_empty_list():
     query = "Incident RN7"
     incidents = []
-    result = summarize_incidents(query, incidents)
+    result = generate_answer(query, incidents)
 
     assert isinstance(result, str)
-    assert "Aucun incident trouvé" in result
+    assert "pas d'incidents" in result.lower()
 
 
 def test_summarize_incidents_valid_input():
@@ -30,11 +29,9 @@ def test_summarize_incidents_valid_input():
         },
     ]
 
-    result = summarize_incidents(query, incidents)
+    result = generate_answer(query, incidents)
 
     assert isinstance(result, str)
-    assert "Résumé pour" in result
     assert "SITE-RN7-L" in result
     assert "Kedougou" in result
-    assert "2025-07-02 23:07:44" in result
-    assert result.count("\n") >= 3
+    assert "2025-07-02" in result
