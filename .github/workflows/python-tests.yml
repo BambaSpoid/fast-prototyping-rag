@@ -2,7 +2,7 @@ name: Python Tests
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
     branches: [main]
 
@@ -23,15 +23,15 @@ jobs:
       run: |
         curl -sSL https://install.python-poetry.org | python3 -
         echo "$HOME/.local/bin" >> $GITHUB_PATH
+        poetry config virtualenvs.in-project true
 
     - name: 📜 Install dependencies
       run: poetry install
 
     - name: 🧪 Run tests with coverage
+      env:
+        PYTHONPATH: src 
       run: poetry run pytest --cov=src --cov-report=xml
 
     - name: 📤 Upload coverage to Codecov
       uses: codecov/codecov-action@v4
-      # with:
-      #   token: ${{ secrets.CODECOV_TOKEN }}
-      #   files: ./coverage.xml
