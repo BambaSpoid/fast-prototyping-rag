@@ -10,28 +10,35 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    env:
+      ES_HOST: ${{ secrets.ES_HOST }}
+      ES_USERNAME: ${{ secrets.ES_USERNAME }}
+      ES_PASSWORD: ${{ secrets.ES_PASSWORD }}
+      ES_INDEX: ${{ secrets.ES_INDEX }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
     steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v3
+      - name: 📥 Checkout code
+        uses: actions/checkout@v3
 
-    - name: 🐍 Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.12"
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
 
-    - name: 📦 Install Poetry
-      run: |
-        curl -sSL https://install.python-poetry.org | python3 -
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
-        poetry config virtualenvs.in-project true
+      - name: 📦 Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          poetry config virtualenvs.in-project true
 
-    - name: 📜 Install dependencies
-      run: poetry install
+      - name: 📜 Install dependencies
+        run: poetry install
 
-    - name: 🧪 Run tests with coverage
-      env:
-        PYTHONPATH: src 
-      run: poetry run pytest --cov=src --cov-report=xml
+      - name: 🧪 Run tests with coverage
+        env:
+          PYTHONPATH: src  # Assure les imports type `from rag.xxx`
+        run: poetry run pytest --cov=src --cov-report=xml
 
-    - name: 📤 Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
+      - name: 📤 Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
