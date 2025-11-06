@@ -1,18 +1,13 @@
-import os
-from textwrap import dedent
-from openai import OpenAI
+import requests
 from datetime import datetime
-
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+from textwrap import dedent
 
 
 def build_augmented_prompt(query: str, incidents: list[dict]) -> str:
-    """Construit le prompt enrichi pour le LLM."""
-
+    """Construit le prompt enrichi pour le modèle Ollama local."""
     if not incidents:
         return f"L'utilisateur demande: {query}\nAucun incident trouvé dans la base."
 
-    # On formate les incidents pour le contexte
     context_lines = []
     for inc in incidents:
         when = inc.get("when")
@@ -21,15 +16,19 @@ def build_augmented_prompt(query: str, incidents: list[dict]) -> str:
                 when = datetime.fromisoformat(when).strftime("%Y-%m-%d %H:%M")
             except Exception:
                 pass
-        line = f"- [{inc.get('severity', 'N/A')}] {inc.get('site', 'Unknown')} @ {when}: {inc.get('text', '')}"
+
+        line = (
+            f"- [{inc.get('severity', 'N/A')}] "
+            f"{inc.get('site', 'Unknown')} @ {when}: {inc.get('text', '')}"
+        )
         context_lines.append(line)
 
     context_text = "\n".join(context_lines)
 
-    # On combine dans un prompt clair
     prompt = dedent(
         f"""
-    Tu es un assistant d'exploitation réseau. Résume et explique les incidents ci-dessous.
+    Tu es un assistant d'exploitation réseau.
+    Utilise UNIQUEMENT les informations ci-dessous pour répondre.
 
     CONTEXTE:
     {context_text}
@@ -38,36 +37,42 @@ def build_augmented_prompt(query: str, incidents: list[dict]) -> str:
     {query}
 
     INSTRUCTION:
-    - Réponds en français.
-    - Sois factuel et concis.
-    - Si plusieurs sites sont mentionnés, regroupe-les.
-    - Indique les sévérités et zones impactées.
-    - Ne génère rien qui n'existe pas dans le contexte.
+    - Réponds en français, clair et concis.
+    - Ne crée aucune information absente du contexte.
+    - Regroupe les incidents similaires.
+    - Indique les sévérités et zones affectées.
     """
     )
 
     return prompt
 
 
-def generate_answer(query: str, incidents: list[dict]) -> str:
-    """Appelle le LLM pour produire la réponse finale."""
+def generate_answer(query: str, incidents: list[dict], model: str = "llama3") -> str:
+    """Appelle Ollama localement pour produire une réponse."""
     prompt = build_augmented_prompt(query, incidents)
 
     try:
-        completion = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {
-                    "role": "system",
-                    "content": "Tu es un assistant expert en supervision réseau.",
-                },
-                {"role": "user", "content": prompt},
-            ],
-            temperature=0.3,
+        response = requests.post(
+            "http://localhost:11434/api/chat",
+            json={
+                "model": model,
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "Tu es un expert réseau et supervision.",
+                    },
+                    {"role": "user", "content": prompt},
+                ],
+                "stream": False,
+            },
+            timeout=60,
         )
 
-        return completion.choices[0].message.content.strip()
+        if response.status_code == 200:
+            data = response.json()
+            return data["message"]["content"].strip()
+        else:
+            return f"(⚠️ Ollama Error {response.status_code}) {response.text}"
 
     except Exception as e:
-        # Fallback si l'appel LLM échoue
-        return f"(⚠️ Fallback) Impossible d'appeler le modèle. Voici le résumé brut:\n\n{prompt}"
+        return f"(⚠️ Erreur locale) Impossible d'appeler Ollama : {e}"
