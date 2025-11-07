@@ -1,0 +1,17 @@
+services:
+  api:
+    build: { context: ., dockerfile: src/rag/api/Dockerfile }
+    environment:
+      ES_HOST: ${ES_HOST}
+      ES_USERNAME: ${ES_USERNAME}
+      ES_PASSWORD: ${ES_PASSWORD}
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+    ports: ["8000:8000"]
+    depends_on: []
+  ui:
+    build: { context: ., dockerfile: src/rag/ui/Dockerfile }
+    environment:
+      API_BASE: http://api:8000/rag
+    ports: ["8501:8501"]
+    depends_on: ["api"]
+    # Optionnel: si tu préfères passer par host.docker.internal, mets API_BASE à http://host.docker.internal:8000/rag
