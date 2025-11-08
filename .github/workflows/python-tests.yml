@@ -10,6 +10,13 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    # ⬇️ Injecte ici les secrets GitHub dans les variables d'environnement
+    env:
+      ES_HOST: ${{ secrets.ES_HOST }}
+      ES_USERNAME: ${{ secrets.ES_USERNAME }}
+      ES_PASSWORD: ${{ secrets.ES_PASSWORD }}
+      OLLAMA_BASE_URL: "http://localhost:11434"  # pas utilisé dans les tests, mais neutre
+
     steps:
     - name: 📥 Checkout code
       uses: actions/checkout@v3
@@ -32,6 +39,3 @@ jobs:
 
     - name: 📤 Upload coverage to Codecov
       uses: codecov/codecov-action@v4
-      # with:
-      #   token: ${{ secrets.CODECOV_TOKEN }}
-      #   files: ./coverage.xml
