@@ -1,17 +1,35 @@
+version: "3.9"
+
 services:
   api:
-    build: { context: ., dockerfile: src/rag/api/Dockerfile }
+    build:
+      context: .
+      dockerfile: src/rag/api/Dockerfile
+    container_name: rag_api
+    ports:
+      - "8000:8000"
     environment:
-      ES_HOST: ${ES_HOST}
+      ES_HOST: https://observablt.seetlu.orange-sonatel.com
       ES_USERNAME: ${ES_USERNAME}
       ES_PASSWORD: ${ES_PASSWORD}
       OLLAMA_BASE_URL: http://host.docker.internal:11434
-    ports: ["8000:8000"]
-    depends_on: []
+    networks:
+      - rag-net
+
   ui:
-    build: { context: ., dockerfile: src/rag/ui/Dockerfile }
+    build:
+      context: .
+      dockerfile: src/rag/ui/Dockerfile
+    container_name: rag_ui
+    ports:
+      - "8501:8501"
     environment:
       API_BASE: http://api:8000/rag
-    ports: ["8501:8501"]
-    depends_on: ["api"]
-    # Optionnel: si tu préfères passer par host.docker.internal, mets API_BASE à http://host.docker.internal:8000/rag
+    depends_on:
+      - api
+    networks:
+      - rag-net
+
+networks:
+  rag-net:
+    driver: bridge
