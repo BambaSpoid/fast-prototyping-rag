@@ -4,11 +4,10 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     ES_HOST: str
-    ES_USERNAME: str
-    ES_PASSWORD: str
-    ES_INDEX: str
-    OPENAI_API_KEY: str
-
+    ES_USERNAME: str | None = None
+    ES_PASSWORD: str | None = None
+    ES_INDEX: str = "metrics-cdr-alarmesu2020-bigdata"
+    OPENAI_API_KEY: str | None = None
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", extra="allow"
     )

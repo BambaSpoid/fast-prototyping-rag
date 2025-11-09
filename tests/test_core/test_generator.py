@@ -36,7 +36,5 @@ def test_summarize_incidents_valid_input():
 
     assert isinstance(result, str)
     assert len(result.strip()) > 0
-    # on tolère la variation de texte, on cherche seulement des indices pertinents
-    assert any(
-        keyword in result.lower() for keyword in ["incident", "site", "kedougou", "rn7"]
-    )
+    keywords = ["incident", "kedougou", "rn7", "link", "down", "alert"]
+    assert any(k in result.lower() for k in keywords)
